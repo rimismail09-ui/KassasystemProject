@@ -4,7 +4,7 @@ using System.Text;
 
 namespace KassasystemProject
 {
-    public internal interface IReceiptService
+    public interface IReceiptService
     {
         void SaveAndPrintReceipt(List<CartItem> cart);
     }

@@ -4,37 +4,80 @@ using System.IO;
 using System.Globalization;
 using System.Threading;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 
 namespace KassasystemProject
 {
     class Program
     {
-        static Dictionary<int, Product> products = new Dictionary<int, Product>();
+        private static string filePath = "products.txt";
+        private static List<Product> products = new List<Product>();
+        private static List<CartItem> Cart = new List<CartItem>();
+
         static void Main(string[] args)
         {
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
-            LoadProducts("products.txt");
+            LoadProducts();
+            IReceiptService receiptService = new ReceiptManager();
 
             bool running = true;
             while (running)
             {
-                Console.WriteLine("\nKASSASYTEM");
-                Console.WriteLine("1. Ny kund");
-                Console.WriteLine("2. Admin");
-                Console.WriteLine("0. Avsluta");
-                Console.WriteLine("val:  ");
+                Console.WriteLine("\n---KASSASYTEM---");
+                Console.WriteLine("1. Visa produkter");
+                Console.WriteLine("2. Lägg till produkt i kundvagn");
+                Console.WriteLine("3. Betala ( PAY)");
+                Console.WriteLine("4.Avsluta:  ");
+                Console.WriteLine("Välj ett alternativ: ");
+
                 string välj = Console.ReadLine();
 
                 switch (välj)
                 {
                     case "1":
-                        StartNewSale();
+                        ShowProducts();
                         break;
+
                     case "2":
-                        Console.WriteLine("Admin läget är inte implementerat för G-nivå.");
+                        Console.Write("Ange produKt-ID:");
+                        string idInput = Console.ReadLine();
+                        if (!int.TryParse(idInput, out int productId))
+                        { Console.WriteLine("Fel: Ogiltig inmatning. Ange endast siffror föt ID.");
+                            break;
+
+                        }
+                        var product = products.FirstOrDefault(p => p - Id == productId);
+                        if (product == null)
+                        { Console.WriteLine(" Fel: Product-ID finns inte i systemet.");
+                            break;
+                        }
+
+                        Console.Write("Ange antal:");
+                        string qtyInput = Console.ReadLine();
+
+                        if (!int.TryParse(qtyInput, out int quantity) || quantity <= 0)
+                        { Console.WriteLine("Fel: Ogiltigt antal . Ange ett helal större än 0.");
+                            break;
+                        }
+
+                        Cart.Add(new CartItem(product, quantity));
+                        Console.WriteLine($"lade till {quantity}st {product.Name} i kundvagnen");
                         break;
-                    case "0":
+
+                    case "3":
+                        if (cart.Count == 0)
+                        {
+                            Console.WriteLine("Kundvagnen är tom!");
+                            break
+                        }
+                        decimal grandTotal = Cart.Sum(item => item.TotalPrice);
+                        receiptService.SaveReceipt(cart, grandTotal);
+                        Cart.Clear();
+                        Console.WriteLine("köp slutfört! kvittot har sparats.");
+                        break;
+
+                    case "4":
+
                         running = false;
                         Console.WriteLine("Avslutar programmet...");
                         break;
@@ -46,88 +89,53 @@ namespace KassasystemProject
             }
         }
 
-        static void LoadProducts(string filepath)
-        {
-            if (!File.Exists(filepath))
-            {
-                File.WriteAllLines(filepath, new string[]
-                {
-                        "300;Bananer;29.90;kg",
-                        "301;Mjölk;15.90;styck",
-                        "302;kaffe;59.90;styck"
-                });
-            }
 
-            foreach (var line in File.ReadAllLines(filepath))
+
+        private static void LoadProducts()
+        {
+            try
             {
-                var parts = line.Split(';');
-                if (parts.Length == 4)
+
+                if (!File.Exists(filepath))
                 {
-                    if (int.TryParse(parts[0], out int id) && decimal.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price))
+                    Console.WriteLine("Varning: Produktfilen saknas. skapar en ny standarfil . . .");
+
+                    File.WriteAllLines(filepath, new[]
+                {
+                        "1, Äpple, 15.50",
+                        "2, Banan, 12.00",
+                        "3, Mjölk, 20.00",
+                });
+                }
+
+
+                products.Clear();
+                string[] lines = File.ReadAllLines(filePath);
+                foreach (string line in lines)
+                {
+                    string[] parts = line.Split(',');
+                    if (parts.Length == 3 &&
+                        int.TryParse(parts[0].Trim(), out int id) &&
+                        decimal.TryParse(parts[2].Trim(), System.Globalization.CultureInfo.InvariantCulture, out decimal price))
+
                     {
-                        products[id] = new Product(id, parts[1], price, parts[3]);
+                        products.Add(new Product { ID = id, Name = parts[1].Trim(), Price = price });
+
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fel vid Läsning av produktfil: {ex.Message}");
+            }
         }
 
-        static void StartNewSale()
-
+        private static void ShowProducts()
         {
-            List<CartItem> cart = new List<CartItem>();
-            Console.WriteLine("\n--- Ny kund(Skriv 'Pay' eller'klar'när du är färdig) ---");
-
-            while (true)
+            Console.WriteLine("\n---Tillgängliga Produkter ---");
+            foreach (var p in products)
             {
-                Console.Write("Ange produkt-ID och antal (t.ex. 300 2 eller 300 1.5):");
-                string input = Console.ReadLine()?.Trim();
-
-                if (string.IsNullOrEmpty(input))
-                    continue;
-
-                if (input.Equals("Pay", StringComparison.OrdinalIgnoreCase) || input.Equals("klar", StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
-
-
-                var parts = input.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length != 2)
-                {
-                    Console.WriteLine("Felaktigt format. Använd formatet: [ID] [Antal], t.ex '300 2'");
-                    continue;
-                }
-                if (!int.TryParse(parts[0], out int id) || !decimal.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out decimal quantity))
-                {
-                    Console.WriteLine("Ogiltiga värden. kontrollera ID och antal.");
-                    continue;
-
-                }
-
-                if (!products.ContainsKey(id))
-                {
-                    Console.WriteLine($"Producten med ID {id}finns inte i systemet.");
-                    continue;
-                }
-                var prod = products[id];
-
-                cart.Add(new CartItem(prod, quantity));
-                Console.WriteLine($"Lagt till: {quantity} {prod.Type} av {prod.Name} (Totalt: {prod.Price * quantity:F2}kr)");
+                Console.WriteLine($"ID: {p.Id} | {p.Name} - {p.Price:C}");
             }
-
-            IReceiptService receiptService = new ReceiptManager();
-            receiptService.saveAndPrintReceipt(cart);
-
         }
     }
-}
-
-
-
-
-
-
-
-      
-
-       
