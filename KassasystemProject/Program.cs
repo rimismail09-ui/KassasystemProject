@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Globalization;
 using System.Threading;
-using System.Net.NetworkInformation;
-using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace KassasystemProject
 {
@@ -12,7 +11,7 @@ namespace KassasystemProject
     {
         private static string filePath = "products.txt";
         private static List<Product> products = new List<Product>();
-        private static List<CartItem> Cart = new List<CartItem>();
+        private static List<CartItem> cart = new List<CartItem>();
 
         static void Main(string[] args)
         {
@@ -52,27 +51,28 @@ namespace KassasystemProject
                             break;
                         }
 
-                        Console.Write("Ange antal:");
+                        Console.Write("Ange antal (t.ex. 1 eller 1.5):");
                         string qtyInput = Console.ReadLine();
 
-                        if (!int.TryParse(qtyInput, out int quantity) || quantity <= 0)
-                        { Console.WriteLine("Fel: Ogiltigt antal . Ange ett helal större än 0.");
+                        if (!decimal.TryParse(qtyInput, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal quantity) || quantity <= 0)
+
+                        { Console.WriteLine("Fel: Ogiltigt antal . Ange ett tal större än 0.");
                             break;
                         }
 
-                        Cart.Add(new CartItem(product, quantity));
-                        Console.WriteLine($"lade till {quantity}st {product.Name} i kundvagnen");
+                        cart.Add(new CartItem(product, quantity));
+                        Console.WriteLine($"lade till {quantity} {product.Type} av {product.Name} i kundvagnen.");
                         break;
 
                     case "3":
                         if (cart.Count == 0)
                         {
                             Console.WriteLine("Kundvagnen är tom!");
-                            break
+                            break;
                         }
-                        decimal grandTotal = Cart.Sum(item => item.TotalPrice);
-                        receiptService.SaveReceipt(cart, grandTotal);
-                        Cart.Clear();
+
+                        receiptService.SaveAndPrintReceipt(cart);
+                        cart.Clear();
                         Console.WriteLine("köp slutfört! kvittot har sparats.");
                         break;
 
@@ -102,9 +102,9 @@ namespace KassasystemProject
 
                     File.WriteAllLines(filePath, new[]
                 {
-                        "1, Äpple, 15.50",
-                        "2, Banan, 12.00",
-                        "3, Mjölk, 20.00",
+                        "1, Äpple, 15.50, kg",
+                        "2, Banan, 12.00, kg",
+                        "3, Mjölk, 20.00, kg",
                 });
                 }
 
@@ -114,12 +114,13 @@ namespace KassasystemProject
                 foreach (string line in lines)
                 {
                     string[] parts = line.Split(',');
-                    if (parts.Length == 3 &&
+                    if (parts.Length >= 3 &&
                         int.TryParse(parts[0].Trim(), out int id) &&
                         decimal.TryParse(parts[2].Trim(), System.Globalization.CultureInfo.InvariantCulture, out decimal price))
 
                     {
-                        products.Add(new Product { ID = id, Name = parts[1].Trim(), Price = price });
+                        string type = parts.Length > 3 ? parts[3].Trim() : "st";
+                        products.Add(new Product(id, parts[1].Trim(), price, type));
 
                     }
                 }
@@ -135,7 +136,8 @@ namespace KassasystemProject
             Console.WriteLine("\n---Tillgängliga Produkter ---");
             foreach (var p in products)
             {
-                Console.WriteLine($"ID: {p.Id} | {p.Name} - {p.Price:C}");
+                Console.WriteLine($"ID: {p.Id} | {p.Name} | Pris: {p.Price:C} | Typ: {p.Type}");
             }
         }
     }
+}

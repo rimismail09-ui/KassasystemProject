@@ -1,4 +1,8 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace KassasystemProject
 {

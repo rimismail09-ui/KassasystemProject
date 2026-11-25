@@ -1,10 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
-using KassaSystemProject;
-using Newtonsoft.Json.Serialization;
-using System.Net.Http.Headers;
+using KassasystemProject;
 
-namespace KassaSystemProject
+
+namespace KassasystemProject
 {
     [TestClass]
     public class CalculatorTests
@@ -13,7 +12,7 @@ namespace KassaSystemProject
         public void Test_CartItem_TotalPrice_Calculation()
         {
             // Arrange:
-            var product = new Product { ID = 1, Name = "Äpple", Price = 15.0m };
+            var product = new Product(1, "Äpple", 15.0m, "kg");
             var cartItem = new CartItem(product, 3);
 
             //Act: (15*3) 
@@ -21,13 +20,30 @@ namespace KassaSystemProject
              
             //Assert: 45
             Assert.AreEqual(45.0m, total);
+
         }
+
+
+        [TestMethod]
+        public  void Test_DecimalWeight_TotalPrice_Calculation()
+        {
+            // Arrange:
+            var product = new Product(1, "Apple", 20.0m, "kg");
+            var CartItem = new CartItem(product, 1.5m);
+
+            // Act: (20.0 * 1.5)
+            decimal total = CartItem.TotalPrice;
+
+            // Assert: 30.0
+            Assert.AreEqual(30.0m, total);
+        }
+
         [TestMethod]
         public void Test_Cart_GrandTotal_Calculation()
         {
             //Arrange:
-            var p1 = new Product { ID = 1, Name = "Äpple", Price = 10.0m };
-            var p2 = new Product { ID = 2, Name = "Mjölk", Price = 20.0m };
+            var p1 = new Product(1, "Äpple", 10.0m, "kg");
+            var p2 = new Product(2,"Mjölk", 20.0m, "st");
 
             var cart = new List<CartItem>
             {
