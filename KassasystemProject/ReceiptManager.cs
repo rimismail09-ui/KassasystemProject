@@ -1,9 +1,16 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace KassasystemProject
 {
-    internal static class ProccessPaymantAndReceipt
+   public interface IReceiptService
     {
+        void SaveAndPrintReceipt(List<CartItem> cart);
+    }
+    
         public class ReceiptManager : IReceiptService
         {
             public void SaveAndPrintReceipt(List<CartItem> cart)

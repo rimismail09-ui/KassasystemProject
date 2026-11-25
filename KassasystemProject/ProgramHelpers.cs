@@ -1,10 +1,12 @@
 ﻿using System.Globalization;
+using System.Collections.Generic;
+using System.IO;
 
 namespace KassasystemProject
 {
     internal static class ProgramHelpers
     {
-        static void ProccessPaymentAndReceipt(List<CartItem> cart)
+       public  static void ProccessPaymentAndReceipt(List<CartItem> cart)
         {
             if (cart.Count == 0)
             {
