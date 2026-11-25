@@ -46,7 +46,7 @@ namespace KassasystemProject
                             break;
 
                         }
-                        var product = products.FirstOrDefault(p => p - Id == productId);
+                        var product = products.FirstOrDefault(p => p.Id == productId);
                         if (product == null)
                         { Console.WriteLine(" Fel: Product-ID finns inte i systemet.");
                             break;
@@ -96,11 +96,11 @@ namespace KassasystemProject
             try
             {
 
-                if (!File.Exists(filepath))
+                if (!File.Exists(filePath))
                 {
                     Console.WriteLine("Varning: Produktfilen saknas. skapar en ny standarfil . . .");
 
-                    File.WriteAllLines(filepath, new[]
+                    File.WriteAllLines(filePath, new[]
                 {
                         "1, Äpple, 15.50",
                         "2, Banan, 12.00",

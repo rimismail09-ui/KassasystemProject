@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="KassasystemProject/KassasystemProject.csproj" />
+  <Project Path="KassaSystemProjectTest/KassaSystemProjectTest.csproj" Id="1c63f95e-7882-48c9-a124-3872719971e0" />
 </Solution>
